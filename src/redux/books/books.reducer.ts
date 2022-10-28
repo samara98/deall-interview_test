@@ -2,18 +2,21 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { Book, getBookList } from 'src/apis/booksApi';
 
 const initialState: {
-  status: string;
+  status: 'idle' | 'loading' | 'succeeded' | 'failed';
   data: Book[];
 } = {
   status: 'idle',
   data: [],
 };
 
-export const getBookListAsync = createAsyncThunk('books/fetchCount', async () => {
-  const response = await getBookList();
-  // The value we return becomes the `fulfilled` action payload
-  return response.data;
-});
+export const getBookListAsync = createAsyncThunk(
+  'books/getBookListAsync',
+  async (params: { categoryId?: number; page?: number; size?: number }) => {
+    const response = await getBookList(params);
+    // The value we return becomes the `fulfilled` action payload
+    return response.data;
+  },
+);
 
 export const booksSlice = createSlice({
   name: 'books',
@@ -25,7 +28,7 @@ export const booksSlice = createSlice({
         state.status = 'loading';
       })
       .addCase(getBookListAsync.fulfilled, (state, action) => {
-        state.status = 'idle';
+        state.status = 'succeeded';
         state.data = action.payload;
       })
       .addCase(getBookListAsync.rejected, (state) => {

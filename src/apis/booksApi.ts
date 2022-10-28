@@ -1,4 +1,3 @@
-import { AxiosRequestConfig } from 'axios';
 import { serverApi } from './_serverApi';
 
 export interface Book {
@@ -16,5 +15,12 @@ export interface Book {
 }
 
 export const getBookList = (
-  config: AxiosRequestConfig = { params: { categoryId: 1, size: 10, page: 0 } },
-) => serverApi.get<Book[]>('/fee-assessment-books', config);
+  params: { categoryId?: number; size?: number; page?: number } = {
+    categoryId: 1,
+    page: 0,
+    size: 10,
+  },
+) =>
+  serverApi.get<Book[]>('/fee-assessment-books', {
+    params: { categoryId: params.categoryId, page: params.page ?? 0, size: params.size },
+  });
