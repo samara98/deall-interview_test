@@ -1,15 +1,21 @@
-import React, { useEffect, useRef } from 'react';
 import { Box, Button, FormControl, FormLabel, Heading, Select } from '@chakra-ui/react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from 'src/hook/useRedux';
 import { getCategoryListAsync, selectAllCategories } from 'src/redux/categories/categories.reducer';
-import { getBookListAsync, getBooksFilter, setBooksFilter } from 'src/redux/books/books.reducer';
+import { setBooksFilter } from 'src/redux/books/books.reducer';
 
 const FilterSection = () => {
   const dispatch = useAppDispatch();
   const categoryStatus = useAppSelector((state) => state.categories.status);
   const categories = useAppSelector(selectAllCategories);
-  const booksFilter = useAppSelector(getBooksFilter);
+  const [searchParams, setSearchParams] = useSearchParams();
   const ref = useRef(true);
+
+  const [filter, setFilter] = useState<{
+    categoryId?: number;
+    size?: number;
+  }>({ size: 10 });
 
   useEffect(() => {
     if (ref.current && categoryStatus === 'idle') {
@@ -19,20 +25,45 @@ const FilterSection = () => {
     return () => {};
   }, [categoryStatus, dispatch]);
 
+  useEffect(() => {
+    const categoryId = searchParams.get('categoryId');
+    const size = searchParams.get('size');
+    const page = searchParams.get('page');
+
+    if (categoryId) {
+      dispatch(setBooksFilter({ categoryId: Number(categoryId) }));
+      setFilter((prev) => ({ ...prev, categoryId: Number(categoryId) }));
+    }
+    if (size) {
+      dispatch(setBooksFilter({ size: Number(size) }));
+      setFilter((prev) => ({ ...prev, size: Number(size) }));
+    }
+    if (page) {
+      dispatch(setBooksFilter({ page: Number(page) }));
+    } else {
+      dispatch(setBooksFilter({ page: 0 }));
+    }
+
+    return () => {};
+  }, [dispatch, searchParams]);
+
   const handleSizeChange: React.ChangeEventHandler<HTMLSelectElement> = (e) => {
-    dispatch(setBooksFilter({ [e.target.name]: Number(e.target.value) }));
+    if (e.target.name === 'categoryId' || e.target.name === 'size') {
+      setFilter((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    }
   };
 
   const handleSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
-    dispatch(
-      getBookListAsync({ categoryId: booksFilter.categoryId, size: booksFilter.size, page: 0 }),
-    );
+    setSearchParams((prev) => {
+      prev.delete('page');
+      return { ...prev, ...filter };
+    });
   };
 
   return (
     <Box flex={'1 1 auto'}>
-      <Heading>Filter</Heading>
+      <Heading mb={'5'}>Filter</Heading>
       <Box borderWidth={'1px'} borderRadius={'lg'} px={'4'} py={'2'}>
         <form onSubmit={handleSubmit}>
           <FormControl>
@@ -41,7 +72,7 @@ const FilterSection = () => {
               name="categoryId"
               placeholder="Select Category"
               size={'sm'}
-              value={booksFilter.categoryId}
+              value={filter.categoryId}
               onChange={handleSizeChange}
             >
               {categories.map((category) => {
@@ -60,7 +91,7 @@ const FilterSection = () => {
               name="size"
               placeholder="Select Size"
               size={'sm'}
-              value={booksFilter.size}
+              value={filter.size}
               onChange={handleSizeChange}
             >
               <option value={10}>10</option>
@@ -76,7 +107,7 @@ const FilterSection = () => {
               mt={2}
               colorScheme="purple"
               type="submit"
-              disabled={!booksFilter.categoryId || !booksFilter.size}
+              disabled={!filter.categoryId || !filter.size}
             >
               Find
             </Button>

@@ -28,8 +28,10 @@ const initialState = booksAdapter.getInitialState<InitialState>({
 
 export const getBookListAsync = createAsyncThunk(
   'books/getBookListAsync',
-  async (params: { categoryId?: number; page?: number; size?: number }) => {
-    const response = await getBookList(params);
+  async (_, { getState }) => {
+    const state = getState() as RootState;
+
+    const response = await getBookList(state.books.filter);
     // The value we return becomes the `fulfilled` action payload
     return response.data;
   },
@@ -50,7 +52,7 @@ export const booksSlice = createSlice({
 
       if (categoryId) state.filter.categoryId = categoryId;
       if (size) state.filter.size = size;
-      if (page) state.filter.page = page;
+      state.filter.page = page;
     },
   },
   extraReducers: (builder) => {

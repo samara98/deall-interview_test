@@ -21,8 +21,8 @@ type BookModalDetailProps = {
 const BookModalDetail = ({ book }: BookModalDetailProps) => {
   return (
     <>
-      <Image src={book.cover_url} alt={book.cover_url} />
       <ModalHeader>{book.title}</ModalHeader>
+      <Image src={book.cover_url} alt={book.cover_url} />
       <ModalCloseButton />
       <ModalBody>
         <VStack divider={<StackDivider borderColor="gray.200" />} spacing={4} align="stretch">
