@@ -1,42 +1,30 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Container, Flex } from '@chakra-ui/react';
-import { useAppDispatch, useAppSelector } from 'src/hook/useRedux';
 // import logo from 'src/logo.svg';
-import { getBookListAsync } from 'src/redux/books/books.reducer';
-import { getCategoryListAsync } from 'src/redux/categories/categories.reducer';
 import FilterSection from 'src/components/FilterSection';
 import BooksSection from 'src/components/BooksSection';
+import { useAppDispatch, useAppSelector } from 'src/hook/useRedux';
+import { getBookListAsync } from 'src/redux/books/books.reducer';
 
 function Home() {
   const dispatch = useAppDispatch();
-  const categoriesState = useAppSelector((state) => state.categories);
-  const booksState = useAppSelector((state) => state.books);
-  const ref = useRef(true);
+  const bookStatus = useAppSelector((state) => state.books.status);
+  const selectedCategoryId = useAppSelector((state) => state.categories.selectedCategoryId);
 
   useEffect(() => {
-    if (ref.current) {
-      ref.current = false;
-      if (categoriesState.status === 'idle') {
-        dispatch(getCategoryListAsync());
-      }
+    if (selectedCategoryId && bookStatus === 'idle') {
+      dispatch(getBookListAsync({ categoryId: selectedCategoryId }));
     }
     return () => {};
-  }, [dispatch, categoriesState.status, booksState.status]);
-
-  useEffect(() => {
-    if (categoriesState.selectedCategory) {
-      dispatch(getBookListAsync({ categoryId: categoriesState.selectedCategory.id }));
-    }
-    return () => {};
-  }, [dispatch, categoriesState.selectedCategory]);
+  }, [bookStatus, dispatch, selectedCategoryId]);
 
   return (
     <Container maxW={{ lg: 'container.lg' }}>
-      <Flex>
-        <Flex w={'25%'}>
+      <Flex direction={{ base: 'column', md: 'row' }}>
+        <Flex w={{ md: '25%' }} mb={{ base: '5', md: '2' }}>
           <FilterSection />
         </Flex>
-        <Flex w={'75%'}>
+        <Flex w={{ md: '75%' }}>
           <BooksSection />
         </Flex>
       </Flex>
@@ -44,4 +32,4 @@ function Home() {
   );
 }
 
-export default Home;
+export default React.memo(Home);

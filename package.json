@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Sejutacita - OnlineTest - FrontEnd Engineer",
   "author": "Sulthon Abdul Malik <sulthon.abdmalik@gmail.com>",
-  "license": "Unlicensed",
+  "license": "Unlicense",
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
@@ -12,6 +12,7 @@
     "prepare": "husky install"
   },
   "dependencies": {
+    "@chakra-ui/icons": "^2.0.11",
     "@chakra-ui/react": "^2.3.6",
     "@emotion/react": "^11.10.5",
     "@emotion/styled": "^11.10.5",

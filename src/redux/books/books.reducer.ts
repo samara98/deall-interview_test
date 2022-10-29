@@ -1,13 +1,30 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit';
 import { Book, getBookList } from 'src/apis/booksApi';
+import { RootState } from '../store';
 
-const initialState: {
+const booksAdapter = createEntityAdapter<Book>();
+
+interface InitialState {
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
-  data: Book[];
-} = {
+  error: any;
+  selectedBookId: number | null;
+  filter: {
+    categoryId?: number;
+    size?: number;
+    page?: number;
+  };
+}
+
+const initialState = booksAdapter.getInitialState<InitialState>({
   status: 'idle',
-  data: [],
-};
+  error: null,
+  selectedBookId: null,
+  filter: {
+    categoryId: undefined,
+    size: 10,
+    page: undefined,
+  },
+});
 
 export const getBookListAsync = createAsyncThunk(
   'books/getBookListAsync',
@@ -21,7 +38,21 @@ export const getBookListAsync = createAsyncThunk(
 export const booksSlice = createSlice({
   name: 'books',
   initialState,
-  reducers: {},
+  reducers: {
+    selectBook: (state, action: { type: string; payload: { id: number } }) => {
+      state.selectedBookId = action.payload.id;
+    },
+    setBooksFilter(
+      state,
+      action: { type: string; payload: { categoryId?: number; size?: number; page?: number } },
+    ) {
+      const { categoryId, size, page } = action.payload;
+
+      if (categoryId) state.filter.categoryId = categoryId;
+      if (size) state.filter.size = size;
+      if (page) state.filter.page = page;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(getBookListAsync.pending, (state) => {
@@ -29,10 +60,21 @@ export const booksSlice = createSlice({
       })
       .addCase(getBookListAsync.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.data = action.payload;
+        booksAdapter.setAll(state, action);
       })
-      .addCase(getBookListAsync.rejected, (state) => {
+      .addCase(getBookListAsync.rejected, (state, action) => {
         state.status = 'failed';
+        state.error = action.error.message;
       });
   },
 });
+
+export const { setBooksFilter, selectBook } = booksSlice.actions;
+
+export const getBooksFilter = (state: RootState) => state.books.filter;
+
+export const {
+  selectAll: selectAllBooks,
+  selectById: selectBookById,
+  selectEntities: selectBooksEntities,
+} = booksAdapter.getSelectors<RootState>((state) => state.books);

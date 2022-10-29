@@ -1,15 +1,20 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, createEntityAdapter } from '@reduxjs/toolkit';
 import { Category, getCategoryList } from 'src/apis/categoriesApi';
+import { RootState } from '../store';
 
-const initialState: {
+const categoriesAdapter = createEntityAdapter<Category>();
+
+interface InitialState {
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
-  data: Category[];
-  selectedCategory: Category | null;
-} = {
+  error: any;
+  selectedCategoryId: number | null;
+}
+
+const initialState = categoriesAdapter.getInitialState<InitialState>({
   status: 'idle',
-  data: [],
-  selectedCategory: null,
-};
+  error: null,
+  selectedCategoryId: null,
+});
 
 export const getCategoryListAsync = createAsyncThunk(
   'categories/getCategoryListAsync',
@@ -25,12 +30,7 @@ export const categoriesSlice = createSlice({
   initialState,
   reducers: {
     selectCategory(state, action: { payload: { id: number }; type: string }) {
-      const selectedCategory = state.data.find((category) => {
-        return category.id === action.payload.id;
-      });
-      if (selectedCategory) {
-        state.selectedCategory = selectedCategory;
-      }
+      state.selectedCategoryId = action.payload.id;
     },
   },
   extraReducers: (builder) => {
@@ -40,10 +40,14 @@ export const categoriesSlice = createSlice({
       })
       .addCase(getCategoryListAsync.fulfilled, (state, action) => {
         state.status = 'succeeded';
-        state.data = action.payload;
+        categoriesAdapter.setAll(state, action);
       })
-      .addCase(getCategoryListAsync.rejected, (state) => {
+      .addCase(getCategoryListAsync.rejected, (state, action) => {
         state.status = 'failed';
+        state.error = action.error.message;
       });
   },
 });
+
+export const { selectAll: selectAllCategories, selectById: selectCategoryById } =
+  categoriesAdapter.getSelectors<RootState>((state) => state.categories);
