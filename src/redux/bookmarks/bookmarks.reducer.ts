@@ -34,6 +34,6 @@ export const { setBookmarks, addBookmark, deleteBookmark } = bookmarksSlice.acti
 
 export const {
   selectAll: selectAllBookmarks,
-  selectById: selectBookById,
+  selectById: selectBookmarkById,
   selectEntities: selectBookmarksEntities,
 } = bookmarksAdapter.getSelectors<RootState>((state) => state.bookmarks);

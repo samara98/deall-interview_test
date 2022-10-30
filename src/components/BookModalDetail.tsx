@@ -1,10 +1,13 @@
 import {
   Box,
+  Button,
   Heading,
   Image,
   ListItem,
   ModalBody,
   ModalCloseButton,
+  ModalContent,
+  ModalFooter,
   ModalHeader,
   StackDivider,
   Text,
@@ -16,12 +19,13 @@ import { Book } from 'src/apis/booksApi';
 
 type BookModalDetailProps = {
   book: Book;
+  onClose: () => void;
 };
 
-const BookModalDetail = ({ book }: BookModalDetailProps) => {
+const BookModalDetail = ({ book, onClose }: BookModalDetailProps) => {
   return (
-    <>
-      <ModalHeader>{book.title}</ModalHeader>
+    <ModalContent>
+      <ModalHeader>{book.title || '[No Title]'}</ModalHeader>
       <Image src={book.cover_url} alt={book.cover_url} />
       <ModalCloseButton />
       <ModalBody>
@@ -30,7 +34,7 @@ const BookModalDetail = ({ book }: BookModalDetailProps) => {
             <Heading as="h4" size={'sm'}>
               Authors
             </Heading>
-            <Text>{book.authors.join(', ')}</Text>
+            <Text>{book.authors?.join(', ')}</Text>
           </Box>
           <Box>
             <Heading as="h4" size={'sm'}>
@@ -43,7 +47,7 @@ const BookModalDetail = ({ book }: BookModalDetailProps) => {
               Section
             </Heading>
             <UnorderedList>
-              {book.sections.map((section, idx) => (
+              {book.sections?.map((section, idx) => (
                 <ListItem key={idx}>
                   <Box>
                     <Heading size={'xs'}>{section.title}</Heading>
@@ -55,7 +59,13 @@ const BookModalDetail = ({ book }: BookModalDetailProps) => {
           </Box>
         </VStack>
       </ModalBody>
-    </>
+
+      <ModalFooter>
+        <Button colorScheme="purple" mr={3} onClick={onClose}>
+          Close
+        </Button>
+      </ModalFooter>
+    </ModalContent>
   );
 };
 

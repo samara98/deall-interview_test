@@ -1,19 +1,19 @@
-import { DeleteIcon } from '@chakra-ui/icons';
+import { CloseIcon, DeleteIcon } from '@chakra-ui/icons';
 import {
   Box,
-  Button,
   Container,
   Flex,
   Heading,
   HStack,
   Image,
   Input,
+  InputGroup,
+  InputRightAddon,
   Modal,
-  ModalContent,
-  ModalFooter,
   ModalOverlay,
   Text,
   useDisclosure,
+  useToast,
   VStack,
 } from '@chakra-ui/react';
 import React, { Dispatch, SetStateAction, useEffect, useState } from 'react';
@@ -32,8 +32,10 @@ type BookItemProps = {
   openBook: () => void;
   selectBookId: Dispatch<SetStateAction<number | null>>;
 };
+
 const BookItem = ({ book, openBook, selectBookId }: BookItemProps) => {
   const dispatch = useAppDispatch();
+  const toast = useToast();
 
   const onSelectBookItem = async (id: number) => {
     selectBookId(() => id);
@@ -42,6 +44,11 @@ const BookItem = ({ book, openBook, selectBookId }: BookItemProps) => {
 
   const onDeleteBookmark = (id: number) => {
     dispatch(deleteBookmark(id));
+    toast({
+      title: 'Bookmark has been deleted',
+      status: 'error',
+      isClosable: true,
+    });
   };
 
   return (
@@ -82,12 +89,14 @@ const Bookmark = () => {
   const [qeyword, setQeyword] = useState('');
   const q = useDebounce(qeyword, 300);
   const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
-  const [book, setBook] = useState(selectedBookId ? booksEntities[selectedBookId] : null);
+  const [book, setBook] = useState<Book | null>(
+    selectedBookId ? booksEntities[selectedBookId] || null : null,
+  );
 
   useEffect(() => {
     const search = q.trim();
 
-    if (!!search) {
+    if (search.length >= 3) {
       const searchRegex = new RegExp(search, 'i');
       setFilteredBooks(() => {
         const newState = books.filter((book) => {
@@ -96,7 +105,7 @@ const Bookmark = () => {
         });
         return newState;
       });
-    } else {
+    } else if (!search) {
       setFilteredBooks(() => books);
     }
 
@@ -104,12 +113,15 @@ const Bookmark = () => {
   }, [books, q]);
 
   useEffect(() => {
-    setBook(() => booksEntities[selectedBookId!]);
+    setBook(() => (selectedBookId ? booksEntities[selectedBookId] || null : null));
     return () => {};
   }, [booksEntities, selectedBookId]);
 
   const onSearch: React.ChangeEventHandler<HTMLInputElement> = (e) => {
     setQeyword(() => e.target.value);
+  };
+  const onClearSearch = () => {
+    setQeyword(() => '');
   };
 
   const onCloseModal = () => {
@@ -123,7 +135,13 @@ const Bookmark = () => {
         <Flex justifyContent={'space-between'}>
           <Heading mb={'5'}>Bookmark</Heading>
           <Box width={'40%'}>
-            <Input variant="filled" placeholder="Search" value={qeyword} onChange={onSearch} />
+            <InputGroup>
+              <Input variant="filled" placeholder="Search" value={qeyword} onChange={onSearch} />
+              <InputRightAddon
+                children={<CloseIcon color={'gray'} />}
+                onClick={() => onClearSearch()}
+              />
+            </InputGroup>
           </Box>
         </Flex>
 
@@ -141,15 +159,7 @@ const Bookmark = () => {
 
       <Modal isOpen={isOpen} onClose={onCloseModal}>
         <ModalOverlay />
-        <ModalContent>
-          {book ? <BookModalDetail book={book} /> : null}
-
-          <ModalFooter>
-            <Button colorScheme="purple" mr={3} onClick={onClose}>
-              Close
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+        {book ? <BookModalDetail book={book} onClose={onCloseModal} /> : null}
       </Modal>
     </Container>
   );

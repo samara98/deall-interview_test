@@ -7,45 +7,52 @@ import {
   HStack,
   Image,
   Modal,
-  ModalContent,
-  ModalFooter,
   ModalOverlay,
   Spinner,
   Text,
   useDisclosure,
+  useToast,
   VStack,
 } from '@chakra-ui/react';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { Dispatch, SetStateAction, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Book } from 'src/apis/booksApi';
 import { useAppDispatch, useAppSelector } from 'src/hooks/useRedux';
-import { addBookmark } from 'src/redux/bookmarks/bookmarks.reducer';
+import { addBookmark, selectBookmarkById } from 'src/redux/bookmarks/bookmarks.reducer';
 import {
   getBookListAsync,
   getBooksFilter,
   selectAllBooks,
-  selectBook,
   selectBooksEntities,
+  setBooksFilter,
 } from 'src/redux/books/books.reducer';
 import BookModalDetail from './BookModalDetail';
 
-type BookItemProps = { book: Book; openBook: () => void };
+type BookItemProps = {
+  book: Book;
+  openBook: () => void;
+  selectBookId: Dispatch<SetStateAction<number | null>>;
+};
 
-const BookItem = ({ book, openBook }: BookItemProps) => {
+const BookItem = ({ book, openBook, selectBookId }: BookItemProps) => {
   const dispatch = useAppDispatch();
+  const bookmarksEntity = useAppSelector((state) => selectBookmarkById(state, book.id));
+  const toast = useToast();
 
   const onSelectBookItem = async (id: number) => {
-    dispatch(selectBook({ id }));
-    await new Promise((res, rej) => {
-      setTimeout(() => {
-        res(true);
-      }, 34);
-    });
+    selectBookId(id);
     openBook();
   };
 
   const onAddBookmark = (book: Book) => {
-    dispatch(addBookmark(book));
+    if (!bookmarksEntity) {
+      dispatch(addBookmark(book));
+      toast({
+        title: 'Successfully added to bookmark',
+        status: 'success',
+        isClosable: true,
+      });
+    }
   };
 
   return (
@@ -70,9 +77,13 @@ const BookItem = ({ book, openBook }: BookItemProps) => {
         </Box>
       </HStack>
 
-      <VStack paddingRight={'4'} onClick={() => onAddBookmark(book)}>
+      <VStack
+        paddingRight={'4'}
+        onClick={() => onAddBookmark(book)}
+        color={!!bookmarksEntity ? 'purple' : undefined}
+      >
         <AddIcon />
-        <Text>Bookmark</Text>
+        <Text>{!!bookmarksEntity ? 'Bookmarked' : 'Bookmark'}</Text>
       </VStack>
     </HStack>
   );
@@ -83,13 +94,15 @@ const BooksSection = () => {
   const books = useAppSelector(selectAllBooks);
   const booksEntities = useAppSelector(selectBooksEntities);
   const bookStatus = useAppSelector((state) => state.books.status);
-  const bookId = useAppSelector((state) => state.books.selectedBookId);
   const booksFilter = useAppSelector(getBooksFilter);
   const [searchParams] = useSearchParams();
 
   const { isOpen, onOpen, onClose } = useDisclosure();
 
-  const [book, setBook] = useState<Book | null>(null);
+  const [selectedBookId, setSelectedBookId] = useState<number | null>(null);
+  const [book, setBook] = useState<Book | null>(
+    selectedBookId ? booksEntities[selectedBookId] || null : null,
+  );
 
   const setBooksFilterPage = useCallback(
     (to: 'next' | 'prev') => {
@@ -111,23 +124,34 @@ const BooksSection = () => {
   const nextLinkPage = useMemo(() => setBooksFilterPage('next'), [setBooksFilterPage]);
 
   useEffect(() => {
-    if (bookId) {
-      const newBook = booksEntities[bookId];
-      setBook(() => (newBook ? newBook : null));
-    }
+    setBook(() => (selectedBookId ? booksEntities[selectedBookId] || null : null));
     return () => {};
-  }, [bookId, booksEntities]);
+  }, [booksEntities, selectedBookId]);
 
   useEffect(() => {
     const t = setTimeout(() => {
-      if (booksFilter.categoryId && booksFilter.size) {
-        dispatch(getBookListAsync());
-      }
+      dispatch(getBookListAsync());
     }, 55);
     return () => {
       clearTimeout(t);
     };
   }, [booksFilter, dispatch]);
+
+  useEffect(() => {
+    const categoryId = searchParams.get('categoryId');
+    const size = searchParams.get('size');
+    const page = searchParams.get('page');
+
+    dispatch(
+      setBooksFilter({ categoryId: Number(categoryId), size: Number(size), page: Number(page) }),
+    );
+    return () => {};
+  }, [dispatch, searchParams]);
+
+  const onCloseModal = () => {
+    onClose();
+    setSelectedBookId(() => null);
+  };
 
   return (
     <>
@@ -138,7 +162,12 @@ const BooksSection = () => {
           <>
             <VStack spacing={'4'} align="stretch" mb={4}>
               {books.map((book) => (
-                <BookItem key={book.id} book={book} openBook={onOpen} />
+                <BookItem
+                  key={book.id}
+                  book={book}
+                  openBook={onOpen}
+                  selectBookId={setSelectedBookId}
+                />
               ))}
             </VStack>
 
@@ -177,17 +206,9 @@ const BooksSection = () => {
         ) : null}
       </Box>
 
-      <Modal isOpen={isOpen} onClose={onClose}>
+      <Modal isOpen={isOpen} onClose={onCloseModal}>
         <ModalOverlay />
-        <ModalContent>
-          {book ? <BookModalDetail book={book} /> : null}
-
-          <ModalFooter>
-            <Button colorScheme="purple" mr={3} onClick={onClose}>
-              Close
-            </Button>
-          </ModalFooter>
-        </ModalContent>
+        {book ? <BookModalDetail book={book} onClose={onCloseModal} /> : null}
       </Modal>
     </>
   );

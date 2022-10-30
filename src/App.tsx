@@ -1,6 +1,6 @@
 import React from 'react';
 // import './App.css';
-import { Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Bookmark from './views/Bookmark';
 import Home from './views/Home';
@@ -13,6 +13,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/bookmark" element={<Bookmark />} />
+        <Route path="*" element={<Navigate to={'/'} replace />} />
       </Routes>
     </>
   );

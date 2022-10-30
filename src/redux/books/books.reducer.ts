@@ -7,7 +7,6 @@ const booksAdapter = createEntityAdapter<Book>();
 interface InitialState {
   status: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: any;
-  selectedBookId: number | null;
   filter: {
     categoryId?: number;
     size?: number;
@@ -18,7 +17,6 @@ interface InitialState {
 const initialState = booksAdapter.getInitialState<InitialState>({
   status: 'idle',
   error: null,
-  selectedBookId: null,
   filter: {
     categoryId: undefined,
     size: 10,
@@ -31,6 +29,11 @@ export const getBookListAsync = createAsyncThunk(
   async (_, { getState }) => {
     const state = getState() as RootState;
 
+    if (!state.books.filter.categoryId) {
+      booksAdapter.setAll(state.books, []);
+      throw new Error('No categoryId');
+    }
+
     const response = await getBookList(state.books.filter);
     // The value we return becomes the `fulfilled` action payload
     return response.data;
@@ -41,17 +44,14 @@ export const booksSlice = createSlice({
   name: 'books',
   initialState,
   reducers: {
-    selectBook: (state, action: { type: string; payload: { id: number } }) => {
-      state.selectedBookId = action.payload.id;
-    },
     setBooksFilter(
       state,
       action: { type: string; payload: { categoryId?: number; size?: number; page?: number } },
     ) {
       const { categoryId, size, page } = action.payload;
 
-      if (categoryId) state.filter.categoryId = categoryId;
-      if (size) state.filter.size = size;
+      state.filter.categoryId = categoryId;
+      state.filter.size = size;
       state.filter.page = page;
     },
   },
@@ -71,7 +71,7 @@ export const booksSlice = createSlice({
   },
 });
 
-export const { setBooksFilter, selectBook } = booksSlice.actions;
+export const { setBooksFilter } = booksSlice.actions;
 
 export const getBooksFilter = (state: RootState) => state.books.filter;
 

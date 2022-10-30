@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from 'src/hooks/useRedux';
 import { getCategoryListAsync, selectAllCategories } from 'src/redux/categories/categories.reducer';
-import { setBooksFilter } from 'src/redux/books/books.reducer';
 
 const FilterSection = () => {
   const dispatch = useAppDispatch();
@@ -13,8 +12,8 @@ const FilterSection = () => {
   const ref = useRef(true);
 
   const [filter, setFilter] = useState<{
-    categoryId?: number;
-    size?: number;
+    categoryId?: number | null;
+    size?: number | null;
   }>({ size: 10 });
 
   useEffect(() => {
@@ -28,21 +27,12 @@ const FilterSection = () => {
   useEffect(() => {
     const categoryId = searchParams.get('categoryId');
     const size = searchParams.get('size');
-    const page = searchParams.get('page');
 
-    if (categoryId) {
-      dispatch(setBooksFilter({ categoryId: Number(categoryId) }));
-      setFilter((prev) => ({ ...prev, categoryId: Number(categoryId) }));
-    }
-    if (size) {
-      dispatch(setBooksFilter({ size: Number(size) }));
-      setFilter((prev) => ({ ...prev, size: Number(size) }));
-    }
-    if (page) {
-      dispatch(setBooksFilter({ page: Number(page) }));
-    } else {
-      dispatch(setBooksFilter({ page: 0 }));
-    }
+    setFilter((prev) => ({
+      ...prev,
+      categoryId: categoryId ? Number(categoryId) : null,
+      size: !!size ? Number(size) : 10,
+    }));
 
     return () => {};
   }, [dispatch, searchParams]);
@@ -72,7 +62,7 @@ const FilterSection = () => {
               name="categoryId"
               placeholder="Select Category"
               size={'sm'}
-              value={filter.categoryId}
+              value={filter.categoryId!}
               onChange={handleSizeChange}
             >
               {categories.map((category) => {
@@ -91,7 +81,7 @@ const FilterSection = () => {
               name="size"
               placeholder="Select Size"
               size={'sm'}
-              value={filter.size}
+              value={filter.size!}
               onChange={handleSizeChange}
             >
               <option value={10}>10</option>
