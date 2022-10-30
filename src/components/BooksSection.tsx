@@ -1,4 +1,4 @@
-import { ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
+import { AddIcon, ChevronLeftIcon, ChevronRightIcon } from '@chakra-ui/icons';
 import {
   Box,
   Button,
@@ -18,7 +18,8 @@ import {
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Book } from 'src/apis/booksApi';
-import { useAppDispatch, useAppSelector } from 'src/hook/useRedux';
+import { useAppDispatch, useAppSelector } from 'src/hooks/useRedux';
+import { addBookmark } from 'src/redux/bookmarks/bookmarks.reducer';
 import {
   getBookListAsync,
   getBooksFilter,
@@ -33,7 +34,7 @@ type BookItemProps = { book: Book; openBook: () => void };
 const BookItem = ({ book, openBook }: BookItemProps) => {
   const dispatch = useAppDispatch();
 
-  const selectBookItem = async (id: number) => {
+  const onSelectBookItem = async (id: number) => {
     dispatch(selectBook({ id }));
     await new Promise((res, rej) => {
       setTimeout(() => {
@@ -43,25 +44,36 @@ const BookItem = ({ book, openBook }: BookItemProps) => {
     openBook();
   };
 
+  const onAddBookmark = (book: Book) => {
+    dispatch(addBookmark(book));
+  };
+
   return (
     <HStack
       p={'2'}
       borderWidth={'1px'}
       borderRadius={'lg'}
       spacing={'4'}
-      onClick={() => selectBookItem(book.id)}
+      justifyContent={'space-between'}
     >
-      <Image height={'100px'} src={book.cover_url} alt={book.cover_url} />
-      <Box>
-        <Heading as="h3" size={'md'}>
-          {book.title}
-        </Heading>
+      <HStack flex={'1 1 auto'} onClick={() => onSelectBookItem(book.id)}>
+        <Image height={'100px'} src={book.cover_url} alt={book.cover_url} />
         <Box>
-          <Text>
-            by <span>{book.authors.join(', ')}</span>
-          </Text>
+          <Heading as="h3" size={'md'}>
+            {book.title}
+          </Heading>
+          <Box>
+            <Text>
+              by <span>{book.authors.join(', ')}</span>
+            </Text>
+          </Box>
         </Box>
-      </Box>
+      </HStack>
+
+      <VStack paddingRight={'4'} onClick={() => onAddBookmark(book)}>
+        <AddIcon />
+        <Text>Bookmark</Text>
+      </VStack>
     </HStack>
   );
 };

@@ -1,4 +1,3 @@
-import { ReactNode } from 'react';
 import {
   Box,
   Flex,
@@ -20,12 +19,15 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon, StarIcon } from '@chakra-ui/icons';
+import { ReactNode } from 'react';
+import { Link as RouterLink, LinkProps } from 'react-router-dom';
 import deall from 'src/assets/deall.svg';
 
-const Links = [{ name: 'Bookmark', icon: StarIcon }];
+const Links = [{ name: 'Bookmark', icon: StarIcon, path: '/bookmark' }];
 
-const NavLink = ({ children }: { children: ReactNode }) => (
+const NavLink = ({ children, to }: { children: ReactNode } & LinkProps) => (
   <Link
+    as={RouterLink}
     px={2}
     py={1}
     rounded={'md'}
@@ -34,6 +36,7 @@ const NavLink = ({ children }: { children: ReactNode }) => (
       bg: useColorModeValue('gray.200', 'gray.700'),
     }}
     href={'#'}
+    to={to}
   >
     {children}
   </Link>
@@ -54,12 +57,13 @@ export default function Navbar() {
             onClick={isOpen ? onClose : onOpen}
           />
           <HStack spacing={8} alignItems={'center'}>
-            <Box>
+            <RouterLink to={'/'}>
               <Image src={deall} />
-            </Box>
+            </RouterLink>
+
             <HStack as={'nav'} spacing={4} display={{ base: 'none', md: 'flex' }}>
-              {Links.map(({ name, icon: Icon }) => (
-                <NavLink key={name}>
+              {Links.map(({ name, icon: Icon, path }) => (
+                <NavLink key={name} to={path}>
                   <HStack>
                     <Icon /> <Text>{name}</Text>
                   </HStack>
@@ -91,8 +95,8 @@ export default function Navbar() {
       {isOpen ? (
         <Box pb={4} display={{ md: 'none' }}>
           <Stack as={'nav'} spacing={4}>
-            {Links.map(({ name, icon: Icon }) => (
-              <NavLink key={name}>
+            {Links.map(({ name, icon: Icon, path }) => (
+              <NavLink key={name} to={path}>
                 <HStack>
                   <Icon /> <Text>{name}</Text>
                 </HStack>

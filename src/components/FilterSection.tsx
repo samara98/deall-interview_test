@@ -1,7 +1,7 @@
 import { Box, Button, FormControl, FormLabel, Heading, Select } from '@chakra-ui/react';
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useAppDispatch, useAppSelector } from 'src/hook/useRedux';
+import { useAppDispatch, useAppSelector } from 'src/hooks/useRedux';
 import { getCategoryListAsync, selectAllCategories } from 'src/redux/categories/categories.reducer';
 import { setBooksFilter } from 'src/redux/books/books.reducer';
 
